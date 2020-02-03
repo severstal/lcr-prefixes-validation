@@ -1,0 +1,79 @@
+plugins {
+	id 'java'
+	id 'war'
+	id 'org.springframework.boot' version '2.1.6.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+	id "com.moowork.node" version "1.3.1"
+}
+
+group = 'ru.rt.eip.simpletariffs.validation'
+version = '0.2.6'
+sourceCompatibility = '1.8'
+
+repositories {
+	mavenCentral()
+	maven { url "$nexusMainUrl" }
+	maven { url "$nexusReleasesUrl" }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'com.oracle:ojdbc8:12.2.0.1'
+
+	implementation 'ch.qos.logback:logback-classic:1.2.3'
+	implementation 'ch.qos.logback:logback-core:1.2.3'
+	implementation 'net.logstash.logback:logstash-logback-encoder:5.0'
+
+	implementation 'org.projectlombok:lombok:1.18.8'
+
+	annotationProcessor 'org.projectlombok:lombok:1.18.8'
+
+	providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')
+}
+
+bootJar {
+	mainClassName = 'ru.rt.eip.simpletariffs.validation.LcrPrefixesValidationApplication'
+	from('web-app/build') {
+		into 'public'
+	}
+}
+
+bootWar {
+	from('web-app/build') {
+		into '/'
+	}
+}
+
+node {
+	// Version of node to use.
+	version = '10.16.1'
+
+	// Version of npm to use.
+	npmVersion = '6.9.0'
+
+	// Base URL for fetching node distributions (change if you have a mirror).
+	//	distBaseUrl = 'https://nodejs.org/dist'
+
+	// If true, it will download node using above parameters.
+	// If false, it will try to use globally installed node.
+	download = true
+
+	// Set the work directory for unpacking node
+	workDir = file("${project.buildDir}/nodejs")
+
+	// Set the work directory for NPM
+	npmWorkDir = file("${project.buildDir}/npm")
+
+	// Set the work directory where node_modules should be located
+	nodeModulesDir = file("${project.projectDir}/web-app")
+}
+
+task buildWebApp(type: NpmTask) {
+	args = ['run-script', 'build']
+}
+
+buildWebApp.dependsOn npmInstall
+compileJava.dependsOn buildWebApp
+
